@@ -60,6 +60,26 @@ terraform output -raw admin_email
 terraform output -raw admin_password
 ```
 
+## Work from another machine
+
+All Terraform state is in S3 and CI is configured on GitHub and AWS, so a fresh clone has everything it needs. On the new machine:
+
+1. **Tools:** Git (Git Bash on Windows), Terraform ≥ 1.10, AWS CLI v2, kubectl, Docker, Node.js, Python.
+2. **GitHub:** clone the repo, with an SSH key for that machine added to your GitHub account (or HTTPS via `gh auth login`).
+3. **AWS:** `aws configure` with credentials of an IAM principal listed in `cluster_admin_principal_arns` (`terraform/eks/terraform.tfvars`). To use a different principal, add it there and apply `terraform/eks` first.
+4. **Shell:** in every terminal:
+   ```bash
+   export AWS_REGION=eu-central-1 MSYS_NO_PATHCONV=1
+   export ACCT=$(aws sts get-caller-identity --query Account --output text)
+   ```
+5. **kubectl:** `aws eks update-kubeconfig --region eu-central-1 --name refplatform-eks`, then `kubectl get nodes`.
+6. **Terraform:** in each root you work on (`terraform/s3-state`, `terraform/eks`, `terraform/apps/<app>`):
+   ```bash
+   terraform init -backend-config="bucket=refplatform-tfstate-$ACCT"
+   terraform plan          # should say "No changes"
+   ```
+7. **Local app dev (optional):** for simple-cms, create `.env.local` from `apps/simple-cms/.env example` ([apps/simple-cms/README.md](../apps/simple-cms/README.md#local-setup)).
+
 ## Useful checks
 ```bash
 kubectl get ingress -A                          # all apps in group refplatform
