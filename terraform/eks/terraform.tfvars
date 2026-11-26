@@ -6,4 +6,4 @@ cluster_version = "1.37"
 cluster_admin_principal_arns = ["arn:aws:iam::763788640069:user/aws-test-user"]
 
 # Set false if terraform/s3-state was applied without github_repository.
-github_ci_roles_enabled = false
+github_ci_roles_enabled = true
