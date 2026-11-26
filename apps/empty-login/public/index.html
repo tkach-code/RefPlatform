@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Login</title>
+  <link rel="stylesheet" href="/empty-login/styles.css">
+  <script src="/empty-login/script.js" defer></script>
+</head>
+<body>
+  <main>
+    <h1 class="visually-hidden" id="login-title">Login</h1>
+    <form class="login-form" method="post" action="/empty-login/login" aria-labelledby="login-title">
+      <div class="field">
+        <label class="visually-hidden" for="username">Username</label>
+        <input id="username" class="username-input" type="text" name="username" autocomplete="username" autocapitalize="none" autocorrect="off" spellcheck="false" enterkeyhint="next" required>
+      </div>
+      <div class="field">
+        <label class="visually-hidden" for="password">Password</label>
+        <input id="password" class="password-input" type="password" name="password" autocomplete="current-password" enterkeyhint="go" required>
+      </div>
+      <button class="login-button" type="submit" aria-label="Login"></button>
+    </form>
+  </main>
+</body>
+</html>

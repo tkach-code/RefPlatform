@@ -1,0 +1,35 @@
+# Manual: re-apply every app in terraform/apps/* with its currently deployed
+# image. Run it after changing shared code in terraform/modules/**. Apps that
+# were never deployed are skipped.
+name: apps-redeploy-all
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  list:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    outputs:
+      apps: ${{ steps.list.outputs.apps }}
+    steps:
+      - uses: actions/checkout@v4
+      - id: list
+        run: |
+          apps="$(find terraform/apps -mindepth 1 -maxdepth 1 -type d -printf '%f\n' | sort | jq -R -s -c 'split("\n") | map(select(length > 0))')"
+          echo "apps=${apps}" >> "$GITHUB_OUTPUT"
+          echo "Apps: ${apps}" >> "$GITHUB_STEP_SUMMARY"
+
+  redeploy:
+    needs: list
+    strategy:
+      fail-fast: false
+      matrix:
+        app: ${{ fromJSON(needs.list.outputs.apps) }}
+    uses: ./.github/workflows/_deploy-app.yml
+    with:
+      app: ${{ matrix.app }}

@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Home</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+  <header>
+    <nav>
+      <a href="/" class="active">Home</a>
+      <a href="/about.html">About</a>
+    </nav>
+  </header>
+
+  <main>
+    <h1>Welcome</h1>
+    <p>This is a static website stub served by nginx.</p>
+
+    <h2>Demo apps</h2>
+    <ul class="apps">
+      <li><a href="/simple-cms/">Simple CMS</a>: Next.js CMS with MongoDB</li>
+      <li><a href="/empty-login/">Empty Login</a>: minimal Express login page</li>
+    </ul>
+
+    <button id="hello-btn" type="button">Click me</button>
+    <p id="output"></p>
+  </main>
+
+  <footer>
+    <p>&copy; <span id="year"></span></p>
+  </footer>
+
+  <script src="/js/main.js"></script>
+</body>
+</html>

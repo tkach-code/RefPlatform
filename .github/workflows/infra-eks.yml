@@ -1,0 +1,150 @@
+# Platform stack (terraform/eks): VPC, EKS, ALB, CloudFront, ECR repos, SSM.
+#   pull_request -> plan only           (Environment "infra": needs approval, because PR code runs with admin rights)
+#   push to main -> plan, then apply    (plan in "infra-plan", restricted to main; apply in "infra": you approve)
+#   manual run   -> same as push (main only)
+# Destroy is never run from CI.
+name: infra-eks
+
+on:
+  pull_request:
+    paths:
+      - 'terraform/eks/**'
+      - '.github/workflows/infra-eks.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'terraform/eks/**'
+      - '.github/workflows/infra-eks.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  id-token: write
+
+concurrency:
+  group: refplatform-infra-eks
+  cancel-in-progress: false
+
+env:
+  AWS_REGION: ${{ vars.AWS_REGION || 'eu-central-1' }}
+  AWS_ACCOUNT_ID: ${{ vars.AWS_ACCOUNT_ID }}
+  TF_VERSION: "1.10.5"
+  TF_DIR: terraform/eks
+
+jobs:
+  plan:
+    if: github.event_name == 'pull_request' || github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    environment: ${{ github.event_name == 'pull_request' && 'infra' || 'infra-plan' }}
+    defaults:
+      run:
+        working-directory: ${{ env.TF_DIR }}
+    outputs:
+      has_changes: ${{ steps.plan.outputs.has_changes }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Check AWS account variable
+        run: |
+          if ! [[ "$AWS_ACCOUNT_ID" =~ ^[0-9]{12}$ ]]; then
+            echo "Set the repository variable AWS_ACCOUNT_ID (12 digits)." >&2
+            exit 1
+          fi
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::${{ vars.AWS_ACCOUNT_ID }}:role/refplatform-gh-infra
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ${{ env.TF_VERSION }}
+          terraform_wrapper: false
+
+      - name: Terraform fmt
+        run: terraform fmt -check -recursive
+
+      - name: Terraform init
+        run: |
+          terraform init -input=false \
+            -backend-config="bucket=refplatform-tfstate-${AWS_ACCOUNT_ID}" \
+            -backend-config="region=${AWS_REGION}"
+
+      - name: Terraform validate
+        run: terraform validate
+
+      - name: Terraform plan
+        id: plan
+        run: |
+          set +e
+          terraform plan -input=false -lock-timeout=5m -detailed-exitcode -out=tfplan
+          code=$?
+          set -e
+          if [ "$code" = 1 ]; then exit 1; fi
+          if [ "$code" = 2 ]; then echo "has_changes=true"; else echo "has_changes=false"; fi >> "$GITHUB_OUTPUT"
+          {
+            echo '### terraform/eks plan'
+            echo '```'
+            terraform show -no-color tfplan | tail -c 60000
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      # The plan file can contain sensitive values. Keep it briefly.
+      - name: Upload plan
+        if: github.event_name != 'pull_request' && steps.plan.outputs.has_changes == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: tfplan-eks
+          path: ${{ env.TF_DIR }}/tfplan
+          retention-days: 1
+
+  apply:
+    needs: plan
+    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main' && needs.plan.outputs.has_changes == 'true'
+    runs-on: ubuntu-latest
+    environment: infra
+    defaults:
+      run:
+        working-directory: ${{ env.TF_DIR }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::${{ vars.AWS_ACCOUNT_ID }}:role/refplatform-gh-infra
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ${{ env.TF_VERSION }}
+          terraform_wrapper: false
+
+      - name: Terraform init
+        run: |
+          terraform init -input=false \
+            -backend-config="bucket=refplatform-tfstate-${AWS_ACCOUNT_ID}" \
+            -backend-config="region=${AWS_REGION}"
+
+      - name: Download plan
+        uses: actions/download-artifact@v4
+        with:
+          name: tfplan-eks
+          path: ${{ env.TF_DIR }}
+
+      - name: Terraform apply
+        run: terraform apply -input=false -lock-timeout=5m tfplan
+
+      - name: Outputs
+        run: |
+          {
+            echo "Public URL: $(terraform output -raw public_base_url)"
+            echo "ALB: $(terraform output -raw alb_dns_name)"
+          } >> "$GITHUB_STEP_SUMMARY"

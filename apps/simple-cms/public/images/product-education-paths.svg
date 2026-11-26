@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 400" role="img" aria-label="Education paths illustration">
+  <defs>
+    <linearGradient id="bg_ep" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#111827"/>
+      <stop offset="100%" stop-color="#7c3aed"/>
+    </linearGradient>
+  </defs>
+  <rect width="600" height="400" rx="28" fill="url(#bg_ep)"/>
+  <path d="M115 270l70-120 70 120h-140zM250 270l70-120 70 120h-140zM385 270l70-120 70 120h-140z" fill="#ede9fe" opacity="0.95"/>
+  <path d="M150 270v-40M285 270v-40M420 270v-40" stroke="#a78bfa" stroke-width="10" stroke-linecap="round"/>
+  <path d="M160 195h51M296 195h51M432 195h51" stroke="#8b5cf6" stroke-width="10" stroke-linecap="round"/>
+  <rect x="140" y="95" width="320" height="22" rx="11" fill="#ddd6fe"/>
+  <rect x="170" y="130" width="260" height="18" rx="9" fill="#c4b5fd"/>
+</svg>

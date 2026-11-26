@@ -1,0 +1,36 @@
+# empty-login: build on every push that touches it, deploy from main.
+# Manual run with image_tag = redeploy/rollback to an existing image without building.
+name: app-empty-login
+
+on:
+  push:
+    paths:
+      - 'apps/empty-login/**'
+      - 'terraform/apps/empty-login/**'
+      - '.github/workflows/app-empty-login.yml'
+  workflow_dispatch:
+    inputs:
+      image_tag:
+        description: Existing ECR tag to deploy (e.g. sha-0123456789ab). Empty = build this commit.
+        required: false
+        type: string
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  build:
+    if: ${{ !inputs.image_tag }}
+    uses: ./.github/workflows/_build-app.yml
+    with:
+      app: empty-login
+      health_path: /empty-login/api/health
+
+  deploy:
+    needs: build
+    if: ${{ !cancelled() && !failure() && github.ref == 'refs/heads/main' && (inputs.image_tag || needs.build.outputs.image_tag) }}
+    uses: ./.github/workflows/_deploy-app.yml
+    with:
+      app: empty-login
+      image_tag: ${{ inputs.image_tag || needs.build.outputs.image_tag }}

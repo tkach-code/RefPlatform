@@ -1,0 +1,5 @@
+MONGODB_URI=mongodb://127.0.0.1:27017/simple-cms
+AUTH_SECRET=replace-me-with-openssl-rand-hex-32
+AUTH_URL=http://localhost:3000
+ADMIN_EMAIL=admin@refplatform.local
+ADMIN_PASSWORD=changeme

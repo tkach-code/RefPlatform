@@ -1,0 +1,18 @@
+.terraform/
+*.tfstate
+*.tfstate.*
+.terraform.tfstate.lock.info
+crash.log
+crash.*.log
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+.terraformrc
+terraform.rc
+#*.tfvars
+!terraform.tfvars.example
+
+# Helm provider index cache. Created at apply time.
+# repositories.yaml stays tracked so Helm does not fall back to the user repo list.
+.helm/cache/

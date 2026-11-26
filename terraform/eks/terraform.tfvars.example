@@ -1,0 +1,13 @@
+aws_region      = "eu-central-1"
+cluster_version = "1.37"
+
+# Your own IAM user/role ARN (not an assumed-role session ARN).
+# cluster_admin_principal_arns = [
+#   "arn:aws:iam::123456789012:user/me",
+# ]
+
+# github_ci_roles_enabled = true
+
+# node_instance_types = ["t3.medium"]
+# node_desired_size   = 2
+# node_max_size       = 3

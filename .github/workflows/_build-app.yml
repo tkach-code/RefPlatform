@@ -1,0 +1,137 @@
+# Reusable: build, test and push one app image to ECR refplatform/<app>:sha-<12>.
+# Called by app-<app>.yml. Skips cleanly while apps/<app> has no Dockerfile yet.
+name: _build-app
+
+on:
+  workflow_call:
+    inputs:
+      app:
+        description: App folder under apps/ (also the ECR repo refplatform/<app>)
+        required: true
+        type: string
+      health_path:
+        description: Full health path used by the smoke test, e.g. /simple-cms/api/health
+        required: true
+        type: string
+      node_version:
+        required: false
+        type: string
+        default: "20"
+    outputs:
+      image_tag:
+        description: Pushed tag (empty when the build was skipped)
+        value: ${{ jobs.build.outputs.image_tag }}
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    outputs:
+      image_tag: ${{ steps.push.outputs.image_tag }}
+    env:
+      APP: ${{ inputs.app }}
+      APP_DIR: apps/${{ inputs.app }}
+      AWS_REGION: ${{ vars.AWS_REGION || 'eu-central-1' }}
+      HEALTH_PATH: ${{ inputs.health_path }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Detect app
+        id: detect
+        run: |
+          if [ ! -f "$APP_DIR/Dockerfile" ]; then
+            echo "::notice::$APP_DIR has no Dockerfile yet. Nothing to build."
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          echo "skip=false" >> "$GITHUB_OUTPUT"
+          if [ -f "$APP_DIR/package-lock.json" ]; then echo "node=true"; else echo "node=false"; fi >> "$GITHUB_OUTPUT"
+          if [ -f "$APP_DIR/tsconfig.json" ]; then echo "typescript=true"; else echo "typescript=false"; fi >> "$GITHUB_OUTPUT"
+
+      - name: Set up Node.js
+        if: steps.detect.outputs.node == 'true'
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ inputs.node_version }}
+          cache: npm
+          cache-dependency-path: ${{ env.APP_DIR }}/package-lock.json
+
+      - name: Install dependencies
+        if: steps.detect.outputs.node == 'true'
+        working-directory: ${{ env.APP_DIR }}
+        run: npm ci
+
+      - name: Lint
+        if: steps.detect.outputs.node == 'true'
+        working-directory: ${{ env.APP_DIR }}
+        run: npm run lint --if-present
+
+      - name: Type check
+        if: steps.detect.outputs.typescript == 'true'
+        working-directory: ${{ env.APP_DIR }}
+        run: npx tsc --noEmit --incremental false
+
+      - name: Build image
+        if: steps.detect.outputs.skip == 'false'
+        run: docker build -t "${APP}-ci:${GITHUB_SHA}" "$APP_DIR"
+
+      - name: Smoke test image
+        if: steps.detect.outputs.skip == 'false'
+        run: |
+          container_id="$(docker run -d -p 127.0.0.1:3000:3000 "${APP}-ci:${GITHUB_SHA}")"
+          trap 'docker logs "$container_id"; docker rm -f "$container_id" >/dev/null' EXIT
+          for attempt in {1..30}; do
+            if curl --fail --silent --show-error "http://127.0.0.1:3000${HEALTH_PATH}"; then
+              echo
+              echo "Health check passed: ${HEALTH_PATH}"
+              exit 0
+            fi
+            sleep 2
+          done
+          echo "Container health check failed: ${HEALTH_PATH}" >&2
+          exit 1
+
+      - name: Check AWS account variable
+        if: steps.detect.outputs.skip == 'false'
+        env:
+          AWS_ACCOUNT_ID: ${{ vars.AWS_ACCOUNT_ID }}
+        run: |
+          if ! [[ "$AWS_ACCOUNT_ID" =~ ^[0-9]{12}$ ]]; then
+            echo "Set the repository variable AWS_ACCOUNT_ID (12 digits)." >&2
+            exit 1
+          fi
+
+      - name: Configure AWS credentials
+        if: steps.detect.outputs.skip == 'false'
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::${{ vars.AWS_ACCOUNT_ID }}:role/refplatform-gh-build
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Login to Amazon ECR
+        if: steps.detect.outputs.skip == 'false'
+        id: ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Push image
+        if: steps.detect.outputs.skip == 'false'
+        id: push
+        env:
+          REGISTRY: ${{ steps.ecr.outputs.registry }}
+        run: |
+          REPOSITORY="refplatform/${APP}"
+          IMAGE_TAG="sha-${GITHUB_SHA::12}"
+          IMAGE_URI="${REGISTRY}/${REPOSITORY}:${IMAGE_TAG}"
+          if aws ecr describe-images --repository-name "$REPOSITORY" --image-ids "imageTag=${IMAGE_TAG}" --region "$AWS_REGION" >/dev/null 2>&1; then
+            echo "Image ${IMAGE_URI} already exists; reusing it."
+          else
+            docker tag "${APP}-ci:${GITHUB_SHA}" "$IMAGE_URI"
+            docker push "$IMAGE_URI"
+          fi
+          echo "image_tag=${IMAGE_TAG}" >> "$GITHUB_OUTPUT"
+          echo "Image: \`${IMAGE_URI}\`" >> "$GITHUB_STEP_SUMMARY"

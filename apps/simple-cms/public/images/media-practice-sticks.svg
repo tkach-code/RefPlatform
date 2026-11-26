@@ -1,0 +1,16 @@
+<svg width="900" height="540" viewBox="0 0 900 540" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="900" height="540" rx="30" fill="#F8FAFC"/>
+  <rect x="100" y="100" width="700" height="310" rx="26" fill="#E2E8F0"/>
+  <rect x="140" y="150" width="270" height="200" rx="18" fill="#0F172A"/>
+  <rect x="160" y="175" width="120" height="120" rx="16" fill="#38BDF8"/>
+  <path d="M200 215V260" stroke="#E0F2FE" stroke-width="14" stroke-linecap="round"/>
+  <path d="M170 240H230" stroke="#E0F2FE" stroke-width="14" stroke-linecap="round"/>
+  <circle cx="510" cy="240" r="64" fill="#F59E0B"/>
+  <path d="M488 225L510 205L533 225L510 245L488 225Z" fill="#FFF7ED"/>
+  <path d="M476 263H544" stroke="#FFF7ED" stroke-width="12" stroke-linecap="round"/>
+  <path d="M444 322H640" stroke="#0F172A" stroke-width="12" stroke-linecap="round" opacity="0.5"/>
+  <path d="M687 158H776" stroke="#0F172A" stroke-width="10" stroke-linecap="round" opacity="0.4"/>
+  <path d="M687 198H746" stroke="#0F172A" stroke-width="10" stroke-linecap="round" opacity="0.35"/>
+  <path d="M687 238H760" stroke="#0F172A" stroke-width="10" stroke-linecap="round" opacity="0.3"/>
+  <text x="110" y="482" font-family="Arial, sans-serif" font-size="32" font-weight="700" fill="#0F172A">Practice That Sticks</text>
+</svg>

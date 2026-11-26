@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 400" role="img" aria-label="Python and data illustration">
+  <defs>
+    <linearGradient id="bg2" x1="0" x2="1" y1="0" y2="1">
+      <stop offset="0%" stop-color="#0f172a"/>
+      <stop offset="100%" stop-color="#0f766e"/>
+    </linearGradient>
+  </defs>
+  <rect width="600" height="400" rx="28" fill="url(#bg2)"/>
+  <circle cx="190" cy="200" r="110" fill="#f0fdfa" opacity="0.95"/>
+  <path d="M155 155c-24 0-42 18-42 40v25c0 22 18 40 42 40h20c15 0 26 11 26 26v15c0 19-17 35-35 35s-35-16-35-35v-10" fill="none" stroke="#1f2937" stroke-width="16" stroke-linecap="round"/>
+  <path d="M224 155c24 0 42 18 42 40v25c0 22-18 40-42 40h-20c-15 0-26 11-26 26v15c0 19 17 35 35 35s35-16 35-35v-10" fill="none" stroke="#1f2937" stroke-width="16" stroke-linecap="round"/>
+  <path d="M120 175h140M120 225h140" stroke="#14b8a6" stroke-width="10" stroke-linecap="round"/>
+  <rect x="300" y="110" width="190" height="170" rx="16" fill="#ecfeff" opacity="0.96"/>
+  <rect x="330" y="145" width="130" height="12" rx="6" fill="#5eead4"/>
+  <rect x="330" y="175" width="90" height="12" rx="6" fill="#99f6e4"/>
+  <rect x="330" y="205" width="110" height="12" rx="6" fill="#99f6e4"/>
+  <path d="M330 246L355 218L380 232L405 190L430 204L450 170" fill="none" stroke="#0f766e" stroke-width="10" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="330" cy="246" r="6" fill="#0f766e"/>
+  <circle cx="355" cy="218" r="6" fill="#0f766e"/>
+  <circle cx="380" cy="232" r="6" fill="#0f766e"/>
+  <circle cx="405" cy="190" r="6" fill="#0f766e"/>
+  <circle cx="430" cy="204" r="6" fill="#0f766e"/>
+  <circle cx="450" cy="170" r="6" fill="#0f766e"/>
+</svg>

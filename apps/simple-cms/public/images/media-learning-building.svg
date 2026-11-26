@@ -1,0 +1,20 @@
+<svg width="900" height="540" viewBox="0 0 900 540" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="900" height="540" rx="30" fill="#F8FAFC"/>
+  <rect x="70" y="90" width="760" height="360" rx="24" fill="#E0F2FE"/>
+  <rect x="140" y="150" width="360" height="220" rx="18" fill="#0F172A"/>
+  <rect x="170" y="180" width="300" height="18" rx="9" fill="#38BDF8"/>
+  <rect x="170" y="216" width="250" height="12" rx="6" fill="#E2E8F0" opacity="0.8"/>
+  <rect x="170" y="240" width="190" height="12" rx="6" fill="#E2E8F0" opacity="0.6"/>
+  <rect x="170" y="284" width="130" height="46" rx="10" fill="#38BDF8"/>
+  <rect x="320" y="270" width="150" height="120" rx="18" fill="#FFFFFF"/>
+  <path d="M365 330L395 300L425 335" stroke="#0F172A" stroke-width="12" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="435" cy="288" r="18" fill="#0EA5E9"/>
+  <circle cx="534" cy="195" r="46" fill="#7DD3FC"/>
+  <path d="M520 190L534 175L548 190L534 205L520 190Z" fill="#0F172A"/>
+  <path d="M486 228H582" stroke="#0F172A" stroke-width="10" stroke-linecap="round"/>
+  <path d="M438 280H610" stroke="#0F172A" stroke-width="10" stroke-linecap="round" opacity="0.4"/>
+  <path d="M680 158L786 158" stroke="#0F172A" stroke-width="10" stroke-linecap="round" opacity="0.5"/>
+  <path d="M680 194L754 194" stroke="#0F172A" stroke-width="10" stroke-linecap="round" opacity="0.4"/>
+  <path d="M680 230L770 230" stroke="#0F172A" stroke-width="10" stroke-linecap="round" opacity="0.35"/>
+  <text x="70" y="485" font-family="Arial, sans-serif" font-size="34" font-weight="700" fill="#0F172A">Learning by Building</text>
+</svg>
