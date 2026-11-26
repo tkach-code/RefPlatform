@@ -388,19 +388,21 @@ Then update the status in [multi-app-platform-plan.md](multi-app-platform-plan.m
 
 After the first local deployment, CI can take over. Full details in [github-readme.md](github-readme.md). Short version:
 
-1. **Layer 1 knows the repo:** `github_repository = "owner/repo"` in `terraform/s3-state/terraform.tfvars`, then `terraform apply` there. Then `github_ci_roles_enabled = true` in `terraform/eks/terraform.tfvars`, and `terraform apply` there.
+1. **Layer 1 knows the repo:** `github_repository = "owner/repo"` in `terraform/s3-state/terraform.tfvars`, then `terraform apply` there. Check that the live trust policy of `refplatform-gh-build` names your repo, not `OWNER/REPO`. Then `github_ci_roles_enabled = true` in `terraform/eks/terraform.tfvars`, and `terraform apply` there. **Commit that tfvars change.** CI applies the committed file, and `false` there would remove the CI roles' cluster access on the first `infra-eks` apply.
 2. **Push the code** with the default branch named `main` (the workflows only deploy and apply from `main`):
    ```bash
    git branch -m master main
    git remote add origin https://github.com/<owner>/<repo>.git
    git push -u origin main
    ```
-   Check that the repo is **private** if you want it to be. The pushed history includes everything committed so far.
+   Check that the repo is **private** if you want it to be. The pushed history includes everything committed so far. Make sure no `.env`, `terraform.tfstate*` or `.terraform/` is in it ([github-readme.md](github-readme.md#1-check-that-nothing-secret-gets-pushed)).
+   If steps 3–4 aren't done yet, the app workflows started by this push fail at the AWS login. That is harmless: nothing is built or deployed.
 3. **GitHub → Settings → Secrets and variables → Actions → Variables:** `AWS_ACCOUNT_ID` = `<acct>`. No secrets: the roles are assumed through OIDC.
 4. **GitHub → Settings → Environments:**
-   - `infra`: required reviewer = you.
+   - `infra`: required reviewer = you, deployment branches unrestricted (PR plans run here too).
    - `infra-plan`: deployment branches = `main` only.
-5. From then on:
+5. **First CI deploy:** **Actions → app-&lt;app&gt; → Run workflow** on `main` with `image_tag` empty, once per app. A push that only touches `terraform/eks/**` doesn't start app workflows. Then check that ECR has `sha-<commit>` and that the Deployments run it ([github-readme.md](github-readme.md#7-verify-that-ci-actually-deployed)). A green run alone isn't proof.
+6. From then on:
    - a push touching `apps/<app>/**` builds, tests and deploys that app;
    - a push touching `terraform/eks/**` plans, then waits for your approval in `infra` before applying;
    - **Actions → app-<app> → Run workflow** with `image_tag` redeploys or rolls back;
