@@ -1,5 +1,5 @@
 # Reusable: build, test and push one app image to ECR refplatform/<app>:sha-<12>.
-# Called by app-<app>.yml. Skips cleanly while apps/<app> has no Dockerfile yet.
+# Called by app-<app>.yml. Skips cleanly when apps/<app> has no Dockerfile.
 name: _build-app
 
 on:
@@ -45,7 +45,7 @@ jobs:
         id: detect
         run: |
           if [ ! -f "$APP_DIR/Dockerfile" ]; then
-            echo "::notice::$APP_DIR has no Dockerfile yet. Nothing to build."
+            echo "::notice::$APP_DIR has no Dockerfile. Nothing to build."
             echo "skip=true" >> "$GITHUB_OUTPUT"
             exit 0
           fi

@@ -73,7 +73,7 @@ CI pushes images to `refplatform/new-app`, which `terraform/eks` creates. **This
    }
    ```
 2. Add the app to both route registries (keep them in sync):
-   - `doc/multi-app-platform-plan.md` §1, "Route / order registry" table
+   - `doc/architecture.md` §1, "Route / order registry" table
    - `terraform/apps/README.md`, the table at the top
 3. Open a PR. `infra-eks` runs a plan (approve it in Environment `infra`). It should show only `aws_ecr_repository` + lifecycle policy for `refplatform/new-app` being **added**, and nothing changed or destroyed.
 4. Merge to `main`. `infra-eks` plans again in `infra-plan`, then the `apply` job waits: **Actions → infra-eks → Review deployments → Approve**.
@@ -190,7 +190,7 @@ A new Ingress joining the ALB group takes about a minute to become routable. Unt
 | Symptom | Cause / fix |
 |---|---|
 | Build: `RepositoryNotFoundException` | Step 2 not applied yet. Approve/apply `infra-eks`, then re-run the workflow |
-| Build: "has no Dockerfile yet. Nothing to build." and no deploy | `apps/new-app/Dockerfile` is missing (on purpose this is a no-op) |
+| Build: "has no Dockerfile. Nothing to build." and no deploy | `apps/new-app/Dockerfile` is missing. The build is a no-op without it |
 | Build: smoke test fails | The container doesn't answer `/new-app/api/health` on port 3000 without env vars. Check the logs printed by the step |
 | `https://<cf>/new-app/` returns 404 from the platform | Ingress not in the group yet (wait a minute), or the app doesn't serve under `/new-app` |
 | Page loads but CSS/JS 404 | Assets are requested from `/…` instead of `/new-app/…`. Fix the base path |
@@ -211,7 +211,7 @@ Do step 1 before removing the Terraform root. `apps-redeploy-all` and the state 
 
 ## Reference
 
-- `doc/multi-app-platform-plan.md`: §1 route registry, §5 app contract
+- `doc/architecture.md`: §1 route registry, §5 app contract
 - `terraform/apps/README.md`: what the `web-app` module creates
 - `terraform/modules/web-app/variables.tf`: all module inputs
 - `doc/github-readme.md`: CI flow and troubleshooting

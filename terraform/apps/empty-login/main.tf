@@ -1,6 +1,6 @@
 # empty-login: demo app at https://<cloudfront>/empty-login.
-# Route registry: doc/multi-app-platform-plan.md §1.
-# App contract (base path, health endpoint, Dockerfile, port 3000): plan §5.
+# Route registry: doc/architecture.md §1.
+# App contract (base path, health endpoint, Dockerfile, port 3000): doc/architecture.md §5.
 
 locals {
   app         = "empty-login"

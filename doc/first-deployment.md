@@ -7,7 +7,7 @@ The other docs are reference material. This one is the tutorial that ties them t
 | Doc | Use it for |
 |---|---|
 | **this file** | First deployment, step by step, with explanations |
-| [multi-app-platform-plan.md](multi-app-platform-plan.md) | Design decisions, naming, route/order registry. §8 is the short rollout order this guide expands |
+| [architecture.md](architecture.md) | How the platform works, naming, route/order registry, app contract |
 | [readme.md](readme.md) | Short manual runbook, useful checks, **destroy everything** |
 | [github-readme.md](github-readme.md) | CI/CD setup and troubleshooting |
 | [apps/new-app/README.md](../apps/new-app/README.md) | Adding another app to the running platform, step by step |
@@ -53,8 +53,6 @@ Browser ─► https://dxxxx.cloudfront.net/simple-cms/   CloudFront refplatform
 | Needs | AWS CLI, Terraform, Docker, kubectl | a GitHub repo, the repo variable and Environments |
 
 This guide does **Path A** end to end, because you see every step and its output. [Section 7](#7-optional-switch-to-github-actions-path-b) then hands day-to-day deploys over to GitHub Actions. Both paths use the same state bucket, so you can mix them.
-
-> **Note:** the repo currently has no GitHub remote, and the local branch is `master`. The workflows only deploy from `main`. That only matters for Path B (see section 7).
 
 ### What it costs
 
@@ -131,7 +129,7 @@ aws s3 ls | grep refplatform
 aws iam list-open-id-connect-providers
 ```
 
-The first two should print nothing. For the third, look for `token.actions.githubusercontent.com`. If it exists (an earlier project created it), you **must** set `create_github_oidc_provider = false` in step 2. An account can have only one provider per URL, and creating a second one fails.
+The first two should print nothing. For the third, look for `token.actions.githubusercontent.com`. If it already exists in the account, you **must** set `create_github_oidc_provider = false` in step 2. An account can have only one provider per URL, and creating a second one fails.
 
 ---
 
@@ -364,8 +362,6 @@ kubectl get ingress -A
 
 Expected: `/` and both health paths → `200`. `/does-not-exist` → `404`, but now it's nginx in `index-app` that answers (it owns `/*`), not the ALB's catch-all. The catch-all at order 1000 only answers while `index-app` isn't deployed.
 
-Then update the status in [multi-app-platform-plan.md](multi-app-platform-plan.md) ("Progress": first real deployment).
-
 ---
 
 ## 6. Day-2 operations (local)
@@ -390,13 +386,11 @@ Then update the status in [multi-app-platform-plan.md](multi-app-platform-plan.m
 After the first local deployment, CI can take over. Full details in [github-readme.md](github-readme.md). Short version:
 
 1. **Layer 1 knows the repo:** `github_repository = "owner/repo"` in `terraform/s3-state/terraform.tfvars`, then `terraform apply` there. Check that the live trust policy of `refplatform-gh-build` names your repo, not `OWNER/REPO`. Then `github_ci_roles_enabled = true` in `terraform/eks/terraform.tfvars`, and `terraform apply` there. **Commit that tfvars change.** CI applies the committed file, and `false` there would remove the CI roles' cluster access on the first `infra-eks` apply.
-2. **Push the code** with the default branch named `main` (the workflows only deploy and apply from `main`):
+2. **Push the code** to the GitHub repository, default branch `main` (the workflows only deploy and apply from `main`):
    ```bash
-   git branch -m master main
-   git remote add origin https://github.com/<owner>/<repo>.git
    git push -u origin main
    ```
-   Check that the repo is **private** if you want it to be. The pushed history includes everything committed so far. Make sure no `.env`, `terraform.tfstate*` or `.terraform/` is in it ([github-readme.md](github-readme.md#1-check-that-nothing-secret-gets-pushed)).
+   Make sure no `.env`, `terraform.tfstate*` or `.terraform/` is in the pushed history ([github-readme.md](github-readme.md#1-check-that-nothing-secret-gets-pushed)).
    If steps 3–4 aren't done yet, the app workflows started by this push fail at the AWS login. That is harmless: nothing is built or deployed.
 3. **GitHub → Settings → Secrets and variables → Actions → Variables:** `AWS_ACCOUNT_ID` = `<acct>`. No secrets: the roles are assumed through OIDC.
 4. **GitHub → Settings → Environments:**

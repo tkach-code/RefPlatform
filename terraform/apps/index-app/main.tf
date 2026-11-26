@@ -1,6 +1,6 @@
 # index-app: landing page at https://<cloudfront>/ with links to every demo app. It owns "/", so it must have the highest order of all apps.
-# Route registry: doc/multi-app-platform-plan.md §1.
-# App contract (base path, health endpoint, Dockerfile, port 3000): plan §5.
+# Route registry: doc/architecture.md §1.
+# App contract (base path, health endpoint, Dockerfile, port 3000): doc/architecture.md §5.
 
 locals {
   app         = "index-app"

@@ -1,6 +1,6 @@
 # Manual runbook
 
-Short reference. For a first deployment with explanations, see [first-deployment.md](first-deployment.md).
+Short reference. For a first deployment with explanations, see [first-deployment.md](first-deployment.md). For how the platform works, see [architecture.md](architecture.md).
 
 Region `eu-central-1`. Commands are bash (Git Bash on Windows). `<acct>` = 12-digit AWS account ID.
 

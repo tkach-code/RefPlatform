@@ -1,5 +1,5 @@
 # simple-cms: Next.js CMS demo at https://<cloudfront>/simple-cms with its own MongoDB.
-# Route registry: doc/multi-app-platform-plan.md §1.
+# Route registry: doc/architecture.md §1.
 
 locals {
   app         = "simple-cms"

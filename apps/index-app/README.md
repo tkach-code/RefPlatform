@@ -1,22 +1,54 @@
 # index-app
 
-RefPlatform landing page with links to every demo app. It owns `/` (ALB group.order 900, the highest), so it receives every path no other app matched.
+The RefPlatform landing page, with links to every app. It owns `/` (ALB group.order 900, the highest app order), so it receives every path that no other app matched, and nginx answers unknown paths with 404.
 
-Static HTML/CSS/JS served by `nginxinc/nginx-unprivileged` on port 3000. `nginx.conf` answers `/api/health` itself. Add a link to the `<ul class="apps">` list in `public/index.html` for every new app (step 6 of [apps/new-app/README.md](../new-app/README.md)). For local Docker runs, see `README.TXT`.
+Static HTML/CSS/JS served by `nginxinc/nginx-unprivileged` on port 3000. `nginx.conf` answers `/api/health` itself.
 
 | | |
 |---|---|
 | Public URL | `https://<cloudfront>/` |
 | Base path | `/` |
 | Health check | `GET /api/health` → 200 |
-| Infrastructure | [terraform/apps/index-app](../../terraform/apps/index-app) |
+| Infrastructure | [terraform/apps/index-app](../../terraform/apps/index-app) (ALB order 900) |
+| CI | [app-index-app.yml](../../.github/workflows/app-index-app.yml) |
 | Image | ECR `refplatform/index-app:sha-<12>` |
 
-## Contract (must hold before the first deploy)
+## Structure
 
-- Serve at the site root `/`. Don't set a Next.js `basePath`. Links to other apps are relative (`/simple-cms/`, `/empty-login/`), so they work on any CloudFront domain. Avoid routes that start with another app's prefix: those paths never reach this app.
-- `GET /api/health` returns 200 without auth or a database.
-- `Dockerfile` in this folder. The container listens on port **3000** and starts without real secrets (the CI smoke test runs it bare).
-- If `package-lock.json` exists: `npm ci` works, and `npm run lint` runs if defined. `tsc --noEmit` runs when `tsconfig.json` exists.
-- Cookies are prefixed with `index-app.` or scoped to `Path=/`. All apps share one hostname.
-- Config comes from env vars: `env` / `secrets` in `terraform/apps/index-app/main.tf` (secrets are stored in Secrets Manager `refplatform/apps/index-app`).
+```
+.
+├── Dockerfile
+├── nginx.conf          # nginx server config, port 3000, /api/health
+└── public/             # site root, served as-is
+    ├── index.html      # app list: <ul class="apps">
+    ├── about.html
+    ├── css/style.css
+    └── js/main.js
+```
+
+## Add a link to a new app
+
+Add an entry to the `<ul class="apps">` list in `public/index.html` (step 6 of [apps/new-app/README.md](../new-app/README.md)). Use relative links (`/simple-cms/`, `/empty-login/`) so they work on any CloudFront domain:
+
+```html
+<li><a href="/new-app/">New App</a>: one-line description</li>
+```
+
+Don't add pages whose paths start with another app's prefix: those requests never reach this app.
+
+## Run locally
+
+```bash
+docker build -t index-app .
+docker run --rm -p 8080:3000 index-app
+```
+
+Open <http://localhost:8080> (health: <http://localhost:8080/api/health>).
+
+To edit without rebuilding, mount the `public` folder so changes show up on page refresh:
+
+```bash
+docker run --rm -p 8080:3000 -v "$(pwd)/public:/usr/share/nginx/html:ro" index-app
+```
+
+(PowerShell: use `${PWD}/public` instead of `$(pwd)/public`.)

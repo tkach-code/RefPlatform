@@ -22,7 +22,7 @@ Each app has its own folder, namespace, image repository, Terraform state and Gi
 | `terraform/modules/` | Shared modules: `web-app` (namespace, IRSA, secret, Deployment, Service, Ingress), `mongodb` |
 | `terraform/apps/<app>/` | One small Terraform root per app |
 | `.github/workflows/` | `app-<app>.yml` per app, `infra-eks.yml`, `apps-redeploy-all.yml`, reusable `_build-app.yml` / `_deploy-app.yml` |
-| `doc/` | Plan, route registry and manual runbook |
+| `doc/` | [Architecture](doc/architecture.md) (route registry, naming, app contract), [first deployment](doc/first-deployment.md), [runbook](doc/readme.md), [CI setup](doc/github-readme.md) |
 
 ## Start from zero
 
@@ -49,7 +49,7 @@ First time? Follow the step-by-step walkthrough in [doc/first-deployment.md](doc
 
 ## Add an app
 
-The full step-by-step guide (code, ECR, Terraform, secrets, workflow, verification, troubleshooting, removal) is [apps/new-app/README.md](apps/new-app/README.md). The short checklist is in [terraform/apps/README.md](terraform/apps/README.md#add-an-app), and the contract every app must follow is in [doc/multi-app-platform-plan.md](doc/multi-app-platform-plan.md) §5. In short:
+The full step-by-step guide (code, ECR, Terraform, secrets, workflow, verification, troubleshooting, removal) is [apps/new-app/README.md](apps/new-app/README.md). The short checklist is in [terraform/apps/README.md](terraform/apps/README.md#add-an-app), and the contract every app must follow is in [doc/architecture.md](doc/architecture.md#5-app-contract-every-app-any-framework). In short:
 - Serve under `/<app>`.
 - Expose `GET /<app>/api/health`.
 - Include a Dockerfile listening on port 3000.

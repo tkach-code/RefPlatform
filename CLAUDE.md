@@ -4,18 +4,18 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Repository layout
 
-RefPlatform: one EKS cluster hosting many independent demo apps behind one CloudFront URL, each app on its own path prefix (`https://<cf>/<app>/`). Everything uses the `refplatform` naming convention (see `doc/multi-app-platform-plan.md` §2).
+RefPlatform: one EKS cluster hosting many independent demo apps behind one CloudFront URL, each app on its own path prefix (`https://<cf>/<app>/`). Everything uses the `refplatform` naming convention (see `doc/architecture.md` §2).
 
 - `apps/<app>/` — app source, one folder per app. `simple-cms` (Next.js 16 + React 19 + TS + Tailwind v4 + MongoDB + NextAuth v5 beta) is the main app. `index-app` is the landing page at `/`: static HTML on unprivileged nginx, port 3000. `nginx.conf` serves `/api/health`, and `public/index.html` links to every app. `empty-login` is Express 5 with its routes mounted at `BASE_PATH` (`/empty-login`) in `server.js`. The asset and form URLs in its `public/*.html` hard-code the prefix, and login accepts any credentials.
 - `terraform/` — apply in this order:
   1. `s3-state` — bootstrap, **local state**: bucket `refplatform-tfstate-<account>` + GitHub OIDC provider and roles `refplatform-gh-{build,deploy,infra}` (only when `github_repository` is set).
   2. `eks` — platform, state key `platform/eks.tfstate`: VPC, EKS `refplatform-eks`, LB controller + shared Ingress `refplatform-ingress/public` (ALB `refplatform-alb`, group `refplatform`, catch-all 404 at order 1000), CloudFront `refplatform-cdn`, ECR `refplatform/<app>` for each entry in `apps.tf`, Secrets Store CSI + ASCP, StorageClass `refplatform-gp3`, SSM params `/refplatform/platform/*`, EKS admin access entries.
   3. `apps/<app>` — one thin root per app, state key `apps/<app>.tfstate`. Uses `terraform/modules/web-app` (namespace, quota, IRSA role `refplatform-<app>-irsa` with an inline policy for its own secret `refplatform/apps/<app>`, SecretProviderClass, Deployment, Service, Ingress in the shared group) plus app-specific resources (simple-cms: `modules/mongodb`). Platform values come from SSM, not remote state.
-- `doc/` — `multi-app-platform-plan.md` (decisions, route/order registry, app contract), `first-deployment.md` (step-by-step first deployment from zero), `readme.md` (manual runbook incl. destroy), `github-readme.md` (CI setup).
+- `doc/` — `architecture.md` (principles, naming, route/order registry, app contract), `first-deployment.md` (step-by-step first deployment from zero), `readme.md` (manual runbook incl. destroy), `github-readme.md` (CI setup).
 
 ## App contract and routing
 
-- The ALB routes by path prefix and **does not strip it**, so each app serves under `/<app>` (Next.js `basePath`). `index-app` owns `/` with the highest `group.order` (900). Other apps use unique orders < 900 (simple-cms 100, empty-login 110). Keep the registry tables in the plan doc and `terraform/apps/README.md` in sync.
+- The ALB routes by path prefix and **does not strip it**, so each app serves under `/<app>` (Next.js `basePath`). `index-app` owns `/` with the highest `group.order` (900). Other apps use unique orders < 900 (simple-cms 100, empty-login 110). Keep the registry tables in `doc/architecture.md` and `terraform/apps/README.md` in sync.
 - Every app exposes `GET <base>/api/health` → 200 (used by k8s probes, the ALB health check via the `healthcheck-path` annotation, and the CI smoke test). It needs a Dockerfile listening on port 3000 that starts without secrets.
 - Apps share one hostname: cookies must be app-prefixed and/or path-scoped.
 - Never put `load-balancer-name` or other "exclusive" ALB annotations on app Ingresses. Only the shared Ingress in `terraform/eks/modules/ingress` sets them.
@@ -62,4 +62,4 @@ terraform apply                       # apps: -var image=<acct>.dkr.ecr.eu-centr
 - `app-<app>.yml` (paths `apps/<app>/**`, `terraform/apps/<app>/**`) → reusable `_build-app.yml` (lint, tsc, docker build, smoke test on the health path, push; no-op without a Dockerfile) → on `main`, `_deploy-app.yml` (terraform apply with that run's tag). Manual run with `image_tag` = rollback.
 - `apps-redeploy-all.yml` (manual): re-applies every `terraform/apps/*` with its current image. Use it after changing `terraform/modules/**`.
 - `infra-eks.yml`: PR → plan (Environment `infra`, needs approval). `main` → plan (Environment `infra-plan`) → apply of the saved plan (Environment `infra`, approval).
-- Adding an app: full guide in `apps/new-app/README.md` (short versions: plan doc §9, `terraform/apps/README.md`). Register it in `terraform/eks/apps.tf` first and get `infra-eks` applied (ECR repo) in a separate merge, then add the app root and caller workflow. The CI deploy role can't create general AWS resources (S3, SQS, RDS…) for an app; that needs `terraform/s3-state/github.tf` or `terraform/eks`.
+- Adding an app: full guide in `apps/new-app/README.md` (short versions: `doc/architecture.md` §7, `terraform/apps/README.md`). Register it in `terraform/eks/apps.tf` first and get `infra-eks` applied (ECR repo) in a separate merge, then add the app root and caller workflow. The CI deploy role can't create general AWS resources (S3, SQS, RDS…) for an app; that needs `terraform/s3-state/github.tf` or `terraform/eks`.

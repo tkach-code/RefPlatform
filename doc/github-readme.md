@@ -109,7 +109,7 @@ push apps/simple-cms/** ──► build: npm ci, lint, tsc, docker build, smoke 
 - Deploy uses the image from the **same run** (`needs:`), so parallel builds of different apps can't mix up images.
 - Deploys of one app are serialized (`concurrency: refplatform-deploy-<app>`). Different apps deploy in parallel.
 - Rollback: **Actions → app-<app> → Run workflow** on `main`, with `image_tag = sha-…`. The last 15 `sha-` tags are kept.
-- An app folder without a `Dockerfile` (still a placeholder) makes the build a no-op, and the deploy is skipped.
+- An app folder without a `Dockerfile` makes the build a no-op, and the deploy is skipped.
 - Changes to `terraform/modules/**` don't trigger anything. Run **apps-redeploy-all**.
 - New app: ECR registration in `infra-eks` first, then the app and its workflow in a second merge. See [apps/new-app/README.md](../apps/new-app/README.md).
 

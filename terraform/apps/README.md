@@ -8,7 +8,7 @@ One small Terraform root per app. Each one uses the shared [`web-app`](../module
 | empty-login | `/empty-login` | 110 | — |
 | index-app | `/` | 900 (must be highest) | — |
 
-Keep this table in sync with [doc/multi-app-platform-plan.md](../../doc/multi-app-platform-plan.md) §1.
+Keep this table in sync with [doc/architecture.md](../../doc/architecture.md) §1.
 
 What `web-app` creates for app `<app>`:
 - namespace `<app>`, with a ResourceQuota and LimitRange
@@ -41,7 +41,7 @@ Short checklist. The full guide, with commands, checks, secrets, extra AWS resou
    - Provide a `Dockerfile`, listening on port 3000.
    - Start without real secrets (CI smoke test).
    - Prefix cookie names with the app name, or scope them to `Path=/<app>`.
-2. **Registry:** pick an unused `group.order` (< 900) and add a row to the table above and to the plan doc.
+2. **Registry:** pick an unused `group.order` (< 900) and add a row to the table above and to `doc/architecture.md`.
 3. **ECR:** add `<app>` to `terraform/eks/apps.tf`, then merge and approve `infra-eks`.
 4. **Terraform:** copy `terraform/apps/empty-login` to `terraform/apps/<app>`. Change `locals` (`app`, `path`, `order`, `health_path`), the backend `key` in `versions.tf`, and add `env`/`secrets` or extra resources.
 5. **Workflow:** copy `.github/workflows/app-empty-login.yml` to `app-<app>.yml` and replace the name and health path.
