@@ -29,7 +29,9 @@ The committed `terraform.tfvars` files hold no secrets. They do contain your acc
 Set `github_repository = "owner/repo"` in `terraform/s3-state/terraform.tfvars`. It is case-sensitive and must match the GitHub URL. Set `create_github_oidc_provider = false` if the account already has the `token.actions.githubusercontent.com` provider. Then:
 
 ```bash
-cd terraform/s3-state && terraform plan && terraform apply   # "No changes" is fine if it was applied with this value already
+cd terraform/s3-state
+terraform init -backend-config="bucket=refplatform-tfstate-<acct>"
+terraform plan && terraform apply   # "No changes" is fine if it was applied with this value already
 ```
 
 Check the live trust policy. It must name your repo, not `OWNER/REPO`:

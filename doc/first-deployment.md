@@ -24,11 +24,11 @@ Infrastructure is split into **three Terraform layers**. Each one is a separate 
              │  reads platform values from SSM /refplatform/platform/*
  Layer 2  terraform/eks            VPC, EKS cluster, ALB + shared Ingress, CloudFront, ECR repos, SSM params
              │  stores its state in the bucket from layer 1
- Layer 1  terraform/s3-state       S3 state bucket + GitHub OIDC roles   (local state on your disk)
+ Layer 1  terraform/s3-state       S3 state bucket + GitHub OIDC roles   (its own state also ends up in that bucket)
 ```
 
 Why three layers?
-- **Layer 1 is the chicken-and-egg step.** Terraform stores state in S3, but the bucket must exist first. So this layer keeps its state locally and only creates the bucket and the CI roles.
+- **Layer 1 is the chicken-and-egg step.** Terraform stores state in S3, but the bucket must exist first. So this layer's first apply runs on local state, and the state is then moved into the bucket it just created.
 - **Layer 2 is slow and rarely changes.** The EKS cluster takes ~20 minutes. You don't want it in the same state as an app that redeploys on every commit.
 - **Layer 3 is fast and per-app.** Each app has its own state file, so deploying `empty-login` can never touch `simple-cms`.
 
@@ -136,17 +136,16 @@ The first two should print nothing. For the third, look for `token.actions.githu
 ## 2. Layer 1: bootstrap (`terraform/s3-state`)
 
 **Creates:**
-- S3 bucket `refplatform-tfstate-<acct>`: versioned, encrypted, private. Holds every other state file.
+- S3 bucket `refplatform-tfstate-<acct>`: versioned, encrypted, private. Holds every state file, including this layer's own (`bootstrap/s3-state.tfstate`).
 - If `github_repository` is set: the GitHub OIDC provider (unless it already exists) and the roles `refplatform-gh-build`, `refplatform-gh-deploy`, `refplatform-gh-infra`.
 
 **Cost:** practically zero.
 
 ```bash
 cd terraform/s3-state
-cp terraform.tfvars.example terraform.tfvars
 ```
 
-Edit `terraform.tfvars`:
+Edit `terraform.tfvars` (committed; `terraform.tfvars.example` documents every option):
 
 ```hcl
 aws_region                  = "eu-central-1"
@@ -154,22 +153,29 @@ github_repository           = "owner/repo"   # or "" for local only (1.4)
 create_github_oidc_provider = false          # false if 1.5 showed the provider already exists
 ```
 
-Then:
+Then apply on local state (the bucket doesn't exist yet), and move the state into the new bucket:
 
 ```bash
-terraform init                # downloads the AWS provider; state stays local in this folder
+mv backend.tf backend.tf.off  # run on local state for the first apply
+terraform init                # downloads the AWS provider
 terraform plan                # read it: a bucket, its settings, and (optionally) 3 roles + policies
 terraform apply               # type "yes"
 terraform output              # account_id, bucket_name, bucket_region, github_role_arns
+
+mv backend.tf.off backend.tf
+terraform init -migrate-state -backend-config="bucket=refplatform-tfstate-$ACCT"   # answer "yes"
+rm -f terraform.tfstate terraform.tfstate.backup   # the state is in S3 now
+terraform plan                # "No changes"
 ```
 
 **Verify:**
 ```bash
 aws s3 ls | grep refplatform-tfstate
 aws iam list-roles --query "Roles[?starts_with(RoleName,'refplatform-gh')].RoleName"
+aws s3 ls s3://refplatform-tfstate-$ACCT/bootstrap/   # s3-state.tfstate
 ```
 
-**Important: back up the local state.** `terraform/s3-state/terraform.tfstate` is git-ignored and is the only record of layer 1. Lose it, and destroying the bucket later means importing or deleting by hand. Copy it somewhere safe.
+From now on, any machine changes this layer with `terraform init -backend-config="bucket=refplatform-tfstate-$ACCT"`, like the other layers.
 
 ---
 
@@ -385,7 +391,7 @@ Expected: `/` and both health paths → `200`. `/does-not-exist` → `404`, but 
 
 After the first local deployment, CI can take over. Full details in [github-readme.md](github-readme.md). Short version:
 
-1. **Layer 1 knows the repo:** `github_repository = "owner/repo"` in `terraform/s3-state/terraform.tfvars`, then `terraform apply` there. Check that the live trust policy of `refplatform-gh-build` names your repo, not `OWNER/REPO`. Then `github_ci_roles_enabled = true` in `terraform/eks/terraform.tfvars`, and `terraform apply` there. **Commit that tfvars change.** CI applies the committed file, and `false` there would remove the CI roles' cluster access on the first `infra-eks` apply.
+1. **Layer 1 knows the repo:** `github_repository = "owner/repo"` in `terraform/s3-state/terraform.tfvars`, then `terraform init -backend-config="bucket=refplatform-tfstate-$ACCT"` and `terraform apply` there. Check that the live trust policy of `refplatform-gh-build` names your repo, not `OWNER/REPO`. Then `github_ci_roles_enabled = true` in `terraform/eks/terraform.tfvars`, and `terraform apply` there. **Commit that tfvars change.** CI applies the committed file, and `false` there would remove the CI roles' cluster access on the first `infra-eks` apply.
 2. **Push the code** to the GitHub repository, default branch `main` (the workflows only deploy and apply from `main`):
    ```bash
    git push -u origin main

@@ -4,7 +4,7 @@ Platform-wide rules are in the root [`AGENTS.md`](../AGENTS.md). Design and nami
 
 ## Layers (apply in this order)
 
-1. **`s3-state`**: the bootstrap. It uses **local state** and creates:
+1. **`s3-state`**: the bootstrap, state key `bootstrap/s3-state.tfstate` in the bucket it creates (`backend.tf`). Applied by hand, never from CI. The first apply in a new account and a destroy run with `backend.tf` renamed to `backend.tf.off` (local state); see `s3-state/README.md`. It creates:
    - the bucket `refplatform-tfstate-<account>`
    - the GitHub OIDC provider and the roles `refplatform-gh-{build,deploy,infra}`, but only when `github_repository` is set
 2. **`eks`**: the platform, state key `platform/eks.tfstate`. It creates:
@@ -26,8 +26,8 @@ Platform-wide rules are in the root [`AGENTS.md`](../AGENTS.md). Design and nami
 ## Commands
 
 ```bash
-cd terraform/<eks|apps/<app>>
-terraform init -backend-config="bucket=refplatform-tfstate-<account-id>"   # key/region/lockfile are in versions.tf
+cd terraform/<s3-state|eks|apps/<app>>
+terraform init -backend-config="bucket=refplatform-tfstate-<account-id>"   # key/region/lockfile: versions.tf (s3-state: backend.tf)
 terraform plan
 terraform apply                       # apps: -var image=<acct>.dkr.ecr.eu-central-1.amazonaws.com/refplatform/<app>:<tag>
 ```
@@ -49,7 +49,7 @@ terraform apply                       # apps: -var image=<acct>.dkr.ecr.eu-centr
 
 1. Every `apps/*` root (`-var image=unused`).
 2. `eks`. The Ingress cleanup helper `eks/modules/ingress/cleanup.cmd` → `cleanup.py` needs `python3`.
-3. `s3-state`. Empty the versioned bucket first.
+3. `s3-state`. Migrate its state back to local first (`backend.tf.off` + `terraform init -migrate-state`), then empty the versioned bucket.
 
 Full commands: `doc/readme.md` → "Destroy everything".
 

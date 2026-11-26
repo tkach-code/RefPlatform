@@ -13,12 +13,16 @@ aws sts get-caller-identity                     # note the Arn for cluster_admin
 
 ### 1. Bootstrap (state bucket + GitHub OIDC roles)
 ```bash
-cd terraform/s3-state
-cp terraform.tfvars.example terraform.tfvars    # github_repository = "owner/repo"
+cd terraform/s3-state                           # terraform.tfvars: github_repository = "owner/repo"
+mv backend.tf backend.tf.off                    # first apply runs on local state
 terraform init
 terraform apply -auto-approve
 terraform output                                # bucket_name = refplatform-tfstate-<acct>
+mv backend.tf.off backend.tf
+terraform init -migrate-state -backend-config="bucket=refplatform-tfstate-<acct>"   # state -> S3, answer "yes"
+rm -f terraform.tfstate terraform.tfstate.backup
 ```
+Later changes, from any machine: `terraform init -backend-config="bucket=refplatform-tfstate-<acct>"`, then `terraform apply`.
 GitHub: variable `AWS_ACCOUNT_ID`, Environments `infra` (reviewer) and `infra-plan` (main only). See [github-readme.md](github-readme.md).
 
 ### 2. Platform (EKS, ALB, CloudFront, ECR)
@@ -86,8 +90,12 @@ Order: **apps → eks → s3-state**. The state lives in the bucket, so the buck
    kubectl config delete-context arn:aws:eks:eu-central-1:<acct>:cluster/refplatform-eks
    kubectl config delete-cluster arn:aws:eks:eu-central-1:<acct>:cluster/refplatform-eks
    ```
-4. Bootstrap. Empty the versioned bucket first:
+4. Bootstrap. Move its state out of the bucket, then empty the versioned bucket:
    ```bash
+   cd terraform/s3-state
+   mv backend.tf backend.tf.off
+   terraform init -migrate-state                 # state S3 -> ./terraform.tfstate, answer "yes"
+   cd ../..
    BUCKET=refplatform-tfstate-<acct>
    aws s3api delete-objects --bucket "$BUCKET" --delete "$(aws s3api list-object-versions --bucket "$BUCKET" --query '{Objects: Versions[].{Key:Key,VersionId:VersionId}}' --output json)"
    aws s3api delete-objects --bucket "$BUCKET" --delete "$(aws s3api list-object-versions --bucket "$BUCKET" --query '{Objects: DeleteMarkers[].{Key:Key,VersionId:VersionId}}' --output json)"   # fails if none: fine
@@ -107,4 +115,4 @@ Order: **apps → eks → s3-state**. The state lives in the bucket, so the buck
    aws s3 ls | grep refplatform-tfstate
    ```
    NAT gateway, Elastic IP, ALB and EKS bill by the hour.
-6. Local cleanup (optional): `terraform/s3-state/terraform.tfstate*`, every `.terraform/` folder.
+6. Local cleanup: `terraform/s3-state/terraform.tfstate*`, every `.terraform/` folder, and rename `terraform/s3-state/backend.tf.off` back to `backend.tf` (don't commit the `.off` name).

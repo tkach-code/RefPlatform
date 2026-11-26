@@ -70,7 +70,7 @@ The same table, shorter, is in [terraform/apps/README.md](../terraform/apps/READ
 | Resource | Name |
 |---|---|
 | State bucket | `refplatform-tfstate-<account>` |
-| State keys | `platform/eks.tfstate`, `apps/<app>.tfstate` |
+| State keys | `bootstrap/s3-state.tfstate`, `platform/eks.tfstate`, `apps/<app>.tfstate` |
 | VPC | `refplatform-vpc` |
 | EKS cluster | `refplatform-eks` |
 | Cluster IAM (nodes, EBS CSI, LB controller) | `refplatform-eks-*` |
@@ -100,7 +100,7 @@ apps/
   new-app/               guide for adding an app (README only)
 
 terraform/
-  s3-state/              bootstrap (local state): refplatform-tfstate-<account> bucket,
+  s3-state/              bootstrap (S3 key bootstrap/s3-state.tfstate): refplatform-tfstate-<account> bucket,
                          GitHub OIDC provider + refplatform-gh-* roles
   eks/                   platform (S3 key platform/eks.tfstate): refplatform-vpc, refplatform-eks,
                          LB controller, refplatform-ingress/public + 404, Secrets Store CSI + ASCP,
@@ -130,7 +130,7 @@ doc/                     architecture (this file), first deployment, runbook, CI
 ## 4. Terraform
 
 ### 4.1 `terraform/s3-state` (bootstrap)
-Bucket `refplatform-tfstate-<account>` (versioned, encrypted, private), the GitHub OIDC provider and the three `refplatform-gh-*` roles (§7.3). Local state, applied once by hand.
+Bucket `refplatform-tfstate-<account>` (versioned, encrypted, private), the GitHub OIDC provider and the three `refplatform-gh-*` roles (§6.3). Applied by hand, never from CI. Its state lives in the bucket it creates (`bootstrap/s3-state.tfstate`): the first apply in a new account runs on local state and is then migrated, and a destroy migrates it back to local first.
 
 ### 4.2 Platform stack (`terraform/eks`)
 1. **S3 backend** `refplatform-tfstate-<account>` / `platform/eks.tfstate`, `use_lockfile = true`, Terraform `>= 1.10`.

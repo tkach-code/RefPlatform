@@ -129,7 +129,7 @@ terraform fmt -check && terraform init -backend=false && terraform validate
 **In-cluster** resources go in the same root, in the app's namespace `module.web_app.namespace`: a database as a Helm chart, a cache, extra Kubernetes objects. `terraform/apps/simple-cms` with `modules/mongodb` is the example (it adds the `helm` provider in `providers.tf`/`versions.tf`). For persistent volumes, use the StorageClass `local.platform.storage_class_name` (`refplatform-gp3`). CI can deploy these with no extra setup.
 
 **AWS** resources (S3 bucket, SQS queue, RDS, DynamoDB, …) need one more step. The CI deploy role `refplatform-gh-deploy` may only manage app state, `refplatform/apps/*` secrets, `refplatform-*-irsa` roles and their inline policies, plus the cluster through its access entry. Creating anything else from `app-new-app` fails with `AccessDenied`. Choose one:
-- extend the `deploy` policy in `terraform/s3-state/github.tf`, scoped to `refplatform-new-app*` names, and apply `terraform/s3-state` **locally** (it has local state); or
+- extend the `deploy` policy in `terraform/s3-state/github.tf`, scoped to `refplatform-new-app*` names, and apply `terraform/s3-state` **by hand** (CI never applies it); or
 - create the resource in `terraform/eks` (applied by the admin role `refplatform-gh-infra`) and publish its name through SSM `/refplatform/...`.
 
 Either way, the app reaches AWS through its IRSA role `refplatform-new-app-irsa` (`module.web_app` output). Add an `aws_iam_role_policy` on it in the app root (CI may do that). Never use node or shared roles.
