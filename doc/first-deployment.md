@@ -10,6 +10,7 @@ The other docs are reference material. This one is the tutorial that ties them t
 | [multi-app-platform-plan.md](multi-app-platform-plan.md) | Design decisions, naming, route/order registry. §8 is the short rollout order this guide expands |
 | [readme.md](readme.md) | Short manual runbook, useful checks, **destroy everything** |
 | [github-readme.md](github-readme.md) | CI/CD setup and troubleshooting |
+| [apps/new-app/README.md](../apps/new-app/README.md) | Adding another app to the running platform, step by step |
 | [terraform/s3-state/README.md](../terraform/s3-state/README.md), [terraform/eks/README.md](../terraform/eks/README.md), [terraform/apps/README.md](../terraform/apps/README.md) | Reference for each Terraform layer |
 
 ---
@@ -379,7 +380,7 @@ Then update the status in [multi-app-platform-plan.md](multi-app-platform-plan.m
 | Change platform (nodes, versions, add an app's ECR repo) | edit `terraform/eks`, `terraform plan`, `terraform apply` |
 | Changed `terraform/modules/**` | re-apply every app root with its current image |
 | Detect manual drift | `terraform plan` in any root should say "No changes" |
-| Add a new app | [terraform/apps/README.md → Add an app](../terraform/apps/README.md#add-an-app) |
+| Add a new app | [apps/new-app/README.md](../apps/new-app/README.md) (full guide), short checklist in [terraform/apps/README.md → Add an app](../terraform/apps/README.md#add-an-app) |
 | Tear everything down | [readme.md → Destroy everything](readme.md#destroy-everything) |
 
 ---

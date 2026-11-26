@@ -46,6 +46,8 @@ terraform output url                            # https://<id>.cloudfront.net/si
 ```
 Tags are immutable: every manual push needs a new tag.
 
+Adding another app: [apps/new-app/README.md](../apps/new-app/README.md).
+
 ### 4. simple-cms admin user (once per fresh database)
 See [terraform/apps/README.md → simple-cms admin user](../terraform/apps/README.md#simple-cms-admin-user). Credentials:
 ```bash

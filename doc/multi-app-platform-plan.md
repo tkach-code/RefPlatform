@@ -248,6 +248,8 @@ Step-by-step walkthrough of steps 2-5: [first-deployment.md](first-deployment.md
 
 ## 9. Checklist: add a new app
 
+Short version. The full step-by-step guide is [apps/new-app/README.md](../apps/new-app/README.md).
+
 1. `apps/<app>/` following §5.
 2. Free `group.order` → add a row to the §1 registry.
 3. Add `<app>` to `apps` in `terraform/eks` → PR → approve `infra-eks` (creates ECR `refplatform/<app>`).

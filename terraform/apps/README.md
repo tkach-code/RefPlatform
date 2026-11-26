@@ -33,6 +33,8 @@ terraform output url
 
 ## Add an app
 
+Short checklist. The full guide, with commands, checks, secrets, extra AWS resources and troubleshooting, is [apps/new-app/README.md](../../apps/new-app/README.md).
+
 1. **Code** in `apps/<app>/`. Follow the app contract:
    - Serve everything under `/<app>` (Next.js `basePath`; `index-app` uses `/`).
    - Return 200 from `GET /<app>/api/health`.

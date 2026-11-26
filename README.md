@@ -49,7 +49,7 @@ First time? Follow the step-by-step walkthrough in [doc/first-deployment.md](doc
 
 ## Add an app
 
-The checklist is in [terraform/apps/README.md](terraform/apps/README.md#add-an-app), and the contract every app must follow is in [doc/multi-app-platform-plan.md](doc/multi-app-platform-plan.md) §5. In short:
+The full step-by-step guide (code, ECR, Terraform, secrets, workflow, verification, troubleshooting, removal) is [apps/new-app/README.md](apps/new-app/README.md). The short checklist is in [terraform/apps/README.md](terraform/apps/README.md#add-an-app), and the contract every app must follow is in [doc/multi-app-platform-plan.md](doc/multi-app-platform-plan.md) §5. In short:
 - Serve under `/<app>`.
 - Expose `GET /<app>/api/health`.
 - Include a Dockerfile listening on port 3000.

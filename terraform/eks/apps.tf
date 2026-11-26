@@ -4,7 +4,7 @@
 # in sync.
 #
 # Add an app here (and apply this stack) before its first build, because CI
-# pushes to the repository created here.
+# pushes to the repository created here. Full guide: apps/new-app/README.md.
 #
 # Removing an app deletes its repository and images (force_delete).
 

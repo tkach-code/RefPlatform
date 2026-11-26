@@ -2,7 +2,7 @@
 
 RefPlatform landing page with links to every demo app. It owns `/` (ALB group.order 900, the highest), so it receives every path no other app matched.
 
-Static HTML/CSS/JS served by `nginxinc/nginx-unprivileged` on port 3000. `nginx.conf` answers `/api/health` itself. Add a link to the `<ul class="apps">` list in `public/index.html` for every new app. For local Docker runs, see `README.TXT`.
+Static HTML/CSS/JS served by `nginxinc/nginx-unprivileged` on port 3000. `nginx.conf` answers `/api/health` itself. Add a link to the `<ul class="apps">` list in `public/index.html` for every new app (step 6 of [apps/new-app/README.md](../new-app/README.md)). For local Docker runs, see `README.TXT`.
 
 | | |
 |---|---|

@@ -111,6 +111,7 @@ push apps/simple-cms/** ──► build: npm ci, lint, tsc, docker build, smoke 
 - Rollback: **Actions → app-<app> → Run workflow** on `main`, with `image_tag = sha-…`. The last 15 `sha-` tags are kept.
 - An app folder without a `Dockerfile` (still a placeholder) makes the build a no-op, and the deploy is skipped.
 - Changes to `terraform/modules/**` don't trigger anything. Run **apps-redeploy-all**.
+- New app: ECR registration in `infra-eks` first, then the app and its workflow in a second merge. See [apps/new-app/README.md](../apps/new-app/README.md).
 
 ## Flow for the platform
 
@@ -134,7 +135,7 @@ The role has no EKS access entry. Apply `terraform/eks` with `github_ci_roles_en
 The app workflows didn't run for that commit (for example, the push only touched `terraform/eks/**`), or only `infra-eks` ran. Check that ECR has the `sha-<commit>` tag (setup step 7). If it doesn't, run **app-&lt;app&gt; → Run workflow** on `main`.
 
 ### Build fails with `RepositoryNotFoundException`
-The app isn't in `terraform/eks/apps.tf` yet, or `infra-eks` hasn't been applied since it was added.
+The app isn't in `terraform/eks/apps.tf` yet, or `infra-eks` hasn't been applied since it was added. Apply it, then re-run the app workflow ([apps/new-app/README.md](../apps/new-app/README.md) step 2).
 
 ### Pods never become ready / ALB returns 502
 The app's health path is wrong or not under its base path. `health_path` in `terraform/apps/<app>/main.tf` must return 200 at the full path (e.g. `/simple-cms/api/health`). The ALB target group health check uses the same path.
