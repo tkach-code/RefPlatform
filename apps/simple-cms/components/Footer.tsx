@@ -23,7 +23,7 @@ export default function Footer() {
           ))}
         </ul>
       </div>
-      <p className="pb-6 text-center text-sm text-globo-gray">CMS Demo App 2026 (v0.1.2)</p>
+      <p className="pb-6 text-center text-sm text-globo-gray">CMS Demo App 2026 (v0.1.3)</p>
     </footer>
   );
 }
