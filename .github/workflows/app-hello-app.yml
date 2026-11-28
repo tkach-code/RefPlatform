@@ -1,0 +1,36 @@
+# hello-app: build on every push that touches it, deploy from main.
+# Manual run with image_tag = redeploy/rollback to an existing image without building.
+name: app-hello-app
+
+on:
+  push:
+    paths:
+      - 'apps/hello-app/**'
+      - 'terraform/apps/hello-app/**'
+      - '.github/workflows/app-hello-app.yml'
+  workflow_dispatch:
+    inputs:
+      image_tag:
+        description: Existing ECR tag to deploy (e.g. sha-0123456789ab). Empty = build this commit.
+        required: false
+        type: string
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  build:
+    if: ${{ !inputs.image_tag }}
+    uses: ./.github/workflows/_build-app.yml
+    with:
+      app: hello-app
+      health_path: /hello-app/api/health
+
+  deploy:
+    needs: build
+    if: ${{ !cancelled() && !failure() && github.ref == 'refs/heads/main' && (inputs.image_tag || needs.build.outputs.image_tag) }}
+    uses: ./.github/workflows/_deploy-app.yml
+    with:
+      app: hello-app
+      image_tag: ${{ inputs.image_tag || needs.build.outputs.image_tag }}
