@@ -6,7 +6,7 @@ RefPlatform hosts many small, independent web apps on one EKS cluster in **eu-ce
 
 | Topic | Rule |
 |---|---|
-| Isolation | Every app gets its own namespace, quota, IAM role, secret, image repository, Terraform state and workflow |
+| Isolation | Every app gets its own namespace, quota, IAM role, image repository, Terraform state and workflow. Apps that use secrets get their own Secrets Manager secret |
 | URL | One generated `*.cloudfront.net` domain. Apps live on **sub-routes** (`/<app>`). The landing page `index-app` owns `/` |
 | Auth | No shared login or SSO. Each app handles its own sessions |
 | Data | Each app brings its own databases and services (simple-cms runs MongoDB in its namespace) |
@@ -24,7 +24,8 @@ Browser
        └─ http://<ALB>                        one ALB "refplatform-alb", Ingress group "refplatform", listener :80
             ├─ /simple-cms*   → ns simple-cms  / svc simple-cms   (group.order 100)
             ├─ /empty-login*  → ns empty-login / svc empty-login  (group.order 110)
-            ├─ /<next-app>*   → ns <next-app>  / ...              (group.order 120, 130, …)
+            ├─ /hello-app*    → ns hello-app   / svc hello-app    (group.order 120)
+            ├─ /<next-app>*   → ns <next-app>  / ...              (group.order 130, 140, …)
             ├─ /*             → ns index-app   / svc index-app    (group.order 900)  landing page
             └─ everything else → fixed 404 "no route"             (group.order 1000) ns refplatform-ingress
 ```
@@ -40,6 +41,7 @@ Browser
 |---|---|---|---|---|---|---|
 | simple-cms | `apps/simple-cms` | `/simple-cms` | 100 | `simple-cms` | `refplatform/simple-cms` | MongoDB |
 | empty-login | `apps/empty-login` | `/empty-login` | 110 | `empty-login` | `refplatform/empty-login` | — |
+| hello-app | `apps/hello-app` | `/hello-app` | 120 | `hello-app` | `refplatform/hello-app` | — |
 | index-app | `apps/index-app` | `/` | 900 | `index-app` | `refplatform/index-app` | — |
 | *(catch-all)* | — | `/` | 1000 | `refplatform-ingress` | — | — |
 
@@ -51,6 +53,7 @@ The same table, shorter, is in [terraform/apps/README.md](../terraform/apps/READ
 |---|---|---|
 | `simple-cms` | Next.js 16, React 19, TypeScript, Tailwind v4, MongoDB, Auth.js v5 | Marketing site with an authenticated admin area for content CRUD |
 | `empty-login` | Express 5 | Minimal login page. Accepts any credentials |
+| `hello-app` | Express 5 | Greeting page and health endpoint for the app-onboarding demo |
 | `index-app` | Static HTML on unprivileged nginx | Landing page with links to every app |
 
 ---
