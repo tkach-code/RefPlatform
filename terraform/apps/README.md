@@ -6,6 +6,7 @@ One small Terraform root per app. Each one uses the shared [`web-app`](../module
 |---|---|---|---|
 | simple-cms | `/simple-cms` | 100 | MongoDB |
 | empty-login | `/empty-login` | 110 | — |
+| hello-app | `/hello-app` | 120 | — |
 | index-app | `/` | 900 (must be highest) | — |
 
 Keep this table in sync with [doc/architecture.md](../../doc/architecture.md) §1.

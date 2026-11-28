@@ -13,5 +13,6 @@ locals {
     "simple-cms",
     "index-app",
     "empty-login",
+    "hello-app",
   ]
 }
