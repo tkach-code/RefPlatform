@@ -16,7 +16,7 @@ The **folder name is the app's identity**. The same string becomes:
 | ECR repository | `refplatform/new-app` |
 | Kubernetes namespace, ServiceAccount, Deployment, Service, Ingress | `new-app` |
 | IAM role (IRSA) | `refplatform-new-app-irsa` |
-| Secrets Manager secret | `refplatform/apps/new-app` |
+| Secrets Manager secret (optional) | `refplatform/apps/new-app` |
 | Terraform root / state key | `terraform/apps/new-app` / `apps/new-app.tfstate` |
 | Workflow | `.github/workflows/app-new-app.yml` |
 
@@ -28,7 +28,8 @@ Pick an **unused ALB `group.order`, below 900**. `index-app` (`/`) must keep the
 |---|---|---|
 | simple-cms | `/simple-cms` | 100 |
 | empty-login | `/empty-login` | 110 |
-| **new-app** | `/new-app` | **120** (next free) |
+| hello-app | `/hello-app` | 120 |
+| **new-app** | `/new-app` | **130** (next free) |
 | index-app | `/` | 900 |
 | catch-all 404 | `/` | 1000 |
 
@@ -68,6 +69,7 @@ CI pushes images to `refplatform/new-app`, which `terraform/eks` creates. **This
        "simple-cms",
        "index-app",
        "empty-login",
+       "hello-app",
        "new-app",
      ]
    }
@@ -102,7 +104,7 @@ Then edit:
   locals {
     app         = "new-app"
     path        = "/new-app"
-    order       = 120
+    order       = 130
     health_path = "/new-app/api/health"
   }
   ```
@@ -163,7 +165,7 @@ Nothing else in CI needs changes:
    ```
    This change triggers the `app-index-app` workflow, which redeploys the landing page.
 2. Commit `apps/new-app/**`, `terraform/apps/new-app/**`, `.github/workflows/app-new-app.yml` and the index link. Open a PR: the build (lint, type check, docker build, smoke test, ECR push) runs on the branch, but there's no deploy.
-3. Merge to `main`. `app-new-app` builds `sha-<12-char-commit>` and runs `terraform apply` in `terraform/apps/new-app` with that tag. This first apply creates the namespace, IRSA role, secret, Deployment, Service and Ingress.
+3. Merge to `main`. `app-new-app` builds `sha-<12-char-commit>` and runs `terraform apply` in `terraform/apps/new-app` with that tag. This first apply creates the namespace, IRSA role, Deployment, Service and Ingress. A non-empty `secrets` map also creates the app's Secrets Manager secret.
 
 CloudFront needs no change. Its default behavior forwards every path to the ALB without caching. `*/_next/static/*` is already cached for any Next.js app.
 
